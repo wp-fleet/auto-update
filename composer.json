@@ -1,6 +1,7 @@
 {
     "name": "wp-fleet/auto-update",
     "description": "PHP Package to handle the plugin and themes auto update functionality",
+    "version": "0.0.2",
     "authors": [
         {
             "name": "Pixolette Soft SRL",
@@ -18,6 +19,6 @@
         }
     },
     "require": {
-        "php": ">=7.4"
+        "php": ">=7.3"
     }
 }
