@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace Pixolette\AutoUpdate\Controllers;
+namespace WpFleet\AutoUpdate\Controllers;
 
 final class Plugin
 {

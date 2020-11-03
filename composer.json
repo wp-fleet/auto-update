@@ -1,5 +1,5 @@
 {
-    "name": "pixolette/auto-update",
+    "name": "wp-fleet/auto-update",
     "description": "PHP Package to handle the plugin and themes auto update functionality",
     "authors": [
         {
@@ -14,7 +14,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "Pixolette\\AutoUpdate\\": "src/"
+            "WpFleet\\AutoUpdate\\": "src/"
         }
     },
     "require": {

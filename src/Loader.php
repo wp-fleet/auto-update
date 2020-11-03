@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace Pixolette\AutoUpdate;
+namespace WpFleet\AutoUpdate;
 
 final class Loader
 {
