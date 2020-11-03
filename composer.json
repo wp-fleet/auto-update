@@ -1,0 +1,23 @@
+{
+    "name": "pixolette/auto-update",
+    "description": "PHP Package to handle the plugin and themes auto update functionality",
+    "authors": [
+        {
+            "name": "Pixolette Soft SRL",
+            "homepage": "https://pixolette.com"
+        },
+        {
+            "name": "Ion Vrinceanu",
+            "email": "ion@pixolette.com",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Pixolette\\AutoUpdate\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.0"
+    }
+}
