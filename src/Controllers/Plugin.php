@@ -14,12 +14,12 @@ final class Plugin
     /**
      * @var string
      */
-    private static string $transient_prefix = 'wp_fleet_auto_update_';
+    private static $transient_prefix = 'wp_fleet_auto_update_';
 
     /**
      * @var array|string[]
      */
-    private static array $data = [
+    private static $data = [
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
@@ -28,40 +28,45 @@ final class Plugin
     /**
      * @var array
      */
-    private static array $error_messages = [];
+    private static $error_messages = [];
 
     /**
      * @var string
      */
-    private static string $plugin_path = '';
+    private static $plugin_path = '';
 
     /**
      * @var string
      */
-    private static string $plugin_basename = '';
+    private static $plugin_basename = '';
+
+    /**
+     * @var string
+     */
+    private static $plugin_name = '';
 
     /**
      * @var array
      */
-    private static array $plugin_data = [];
+    private static $plugin_data = [];
 
     /**
      * @var string
      */
-    private static string $license_key = '';
+    private static $license_key = '';
 
     /**
      * @var int
      */
-    private static int $transient_validity = 12;
+    private static $transient_validity = 12;
 
     /**
      * Function to init package functionality
      *
      * @param array $args
-     * @param string $licence_key
+     * @param string $license_key
      */
-    public function init( array $args, string $licence_key = '' ) : void
+    public function init( array $args, string $license_key = '' )
     {
         self::$data = array_merge( self::$data, $args );
 
@@ -79,7 +84,7 @@ final class Plugin
             return;
         }
 
-        self::$licence_key = $licence_key;
+        self::$license_key = $license_key;
         if ( ! empty( $args['transient_validity'] ) && 0 < $args['transient_validity'] ) {
             self::$transient_validity = (int) $args['transient_validity'];
         }
@@ -88,7 +93,7 @@ final class Plugin
         $this->setupActionsAndFilters();
     }
 
-    private function setupPluginData() : void
+    private function setupPluginData()
     {
         self::$plugin_path = plugin_dir_path( self::$data['plugin_full_path'] );
         self::$plugin_basename = plugin_basename( self::$data['plugin_full_path'] );
@@ -107,7 +112,7 @@ final class Plugin
     /**
      * Function to register actions and filters
      */
-    private function setupActionsAndFilters() : void
+    private function setupActionsAndFilters()
     {
         if ( ! empty( self::$plugin_data ) ) {
 
@@ -131,7 +136,7 @@ final class Plugin
      *
      * @return bool
      */
-    private function currentPluginIsActive() : bool
+    private function currentPluginIsActive()
     {
         if ( ! function_exists( 'is_plugin_active' ) ) {
             include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -140,7 +145,13 @@ final class Plugin
         return is_plugin_active( self::$plugin_basename );
     }
 
-    private function getTransientName( string $transient = 'plugin_info' ) : string
+    /**
+     * Function to get transient name.
+     *
+     * @param string $transient
+     * @return string
+     */
+    private function getTransientName( string $transient = 'plugin_info' )
     {
         return self::$transient_prefix . $transient . '_' . self::$plugin_basename;
     }
@@ -201,21 +212,23 @@ final class Plugin
 
         // Check if transient is set.
         $transient = get_transient( $transient_name );
+
         if ( false !== $transient ) {
             return $transient;
         }
 
         // data that request update
         $update_data = [
-            'action' => 'wp-fleet-plugin-update',
+            'action' => 'wp-fleet-plugin-info',
             'license-code' => self::$license_key,
             'product-slug' => self::$plugin_basename,
+            'product-name' => self::$plugin_data['Name'],
             'website' => home_url(),
         ];
 
         $response = $this->request( $update_data );
 
-        if ( ! is_wp_error( $response ) && isset( $response->success ) && 1 == $response->success && isset( $response->data ) ) {
+        if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && empty( $response->data ) ) {
             $transient = $response->data;
 
             // Update transient
