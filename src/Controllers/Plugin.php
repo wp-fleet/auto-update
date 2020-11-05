@@ -228,7 +228,7 @@ final class Plugin
 
         $response = $this->request( $update_data );
 
-        if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && empty( $response->data ) ) {
+        if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && ! empty( $response->data ) ) {
             $transient = $response->data;
 
             // Update transient
@@ -278,15 +278,18 @@ final class Plugin
         }
 
         // data that request update
-        $update_data = array(
-            'action' => 'product-details',
+        $update_data = [
+            'action' => 'wp-fleet-plugin-details',
+            'license-code' => self::$license_key,
             'product-slug' => self::$plugin_basename,
+            'product-name' => self::$plugin_data['Name'],
             'website' => home_url(),
-        );
+        ];
 
-        $response = $this->request('/', $update_data);
-        if ( ! is_wp_error( $response ) && isset( $response->success ) && 1 == $response->success
-            && isset( $response->product )
+        $response = $this->request( $update_data );
+
+        if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success
+            && ! empty( $response->product )
         ) {
             $transient = $response->product;
             $transient->icons = (array) $transient->icons;
