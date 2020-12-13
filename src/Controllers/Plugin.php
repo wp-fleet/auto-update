@@ -340,7 +340,7 @@ final class Plugin
      */
     public function filterAllowPluginUpdateFromCustomHost( $allow, $host, $url ) : bool
     {
-        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$date['allowed_hosts'] ) ) {
+        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'] ) ) {
             return true;
         }
 
