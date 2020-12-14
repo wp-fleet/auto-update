@@ -14,46 +14,47 @@ final class Plugin
     /**
      * @var string
      */
-    private static $transient_prefix = 'wp_fleet_auto_update_';
+    private static string $transient_prefix = 'wp_fleet_auto_update_';
 
     /**
      * @var array|string[]
      */
-    private static $data = [
+    private static array $data = [
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
+        'licence_key' => false,
     ];
 
     /**
      * @var array
      */
-    private static $error_messages = [];
+    private static array $error_messages = [];
 
     /**
      * @var string
      */
-    private static $plugin_path = '';
+    private static string $plugin_path = '';
 
     /**
      * @var string
      */
-    private static $plugin_basename = '';
+    private static string $plugin_basename = '';
 
     /**
      * @var array
      */
-    private static $plugin_data = [];
+    private static array $plugin_data = [];
 
     /**
      * @var string
      */
-    private static $license_key = '';
+    private static string $license_key = '';
 
     /**
      * @var int
      */
-    private static $transient_validity = 12;
+    private static int $transient_validity = 12;
 
     /**
      * Function to init package functionality
@@ -61,7 +62,7 @@ final class Plugin
      * @param array $args
      * @param string $license_key
      */
-    public function init( array $args, string $license_key = '' )
+    public function init( array $args, string $license_key = '' ) : void
     {
         self::$data = array_merge( self::$data, $args );
 
@@ -84,11 +85,13 @@ final class Plugin
             self::$transient_validity = (int) $args['transient_validity'];
         }
 
+        ( new LicenseKey() )->init( self::$data );
+
         $this->setupPluginData();
         $this->setupActionsAndFilters();
     }
 
-    private function setupPluginData()
+    private function setupPluginData() : void
     {
         self::$plugin_path = plugin_dir_path( self::$data['plugin_full_path'] );
         self::$plugin_basename = plugin_basename( self::$data['plugin_full_path'] );
@@ -107,7 +110,7 @@ final class Plugin
     /**
      * Function to register actions and filters
      */
-    private function setupActionsAndFilters()
+    private function setupActionsAndFilters() : void
     {
         if ( ! empty( self::$plugin_data ) ) {
 
@@ -131,7 +134,7 @@ final class Plugin
      *
      * @return bool
      */
-    private function currentPluginIsActive()
+    private function currentPluginIsActive() : bool
     {
         if ( ! function_exists( 'is_plugin_active' ) ) {
             include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
@@ -146,7 +149,7 @@ final class Plugin
      * @param string $transient
      * @return string
      */
-    private function getTransientName( string $transient = 'plugin_info' )
+    private function getTransientName( string $transient = 'plugin_info' ) : string
     {
         return self::$transient_prefix . $transient . '_' . self::$plugin_basename;
     }
@@ -180,6 +183,9 @@ final class Plugin
 
         // Get the remote version.
         $remote_plugin_data = $this->getRemotePluginData();
+//        print_r('<pre>');
+//        print_r($remote_plugin_data);
+//        die;
         if (!is_wp_error($remote_plugin_data) && isset($remote_plugin_data->new_version) && $remote_plugin_data->new_version) {
 
             // If a newer version is available, add the update.
