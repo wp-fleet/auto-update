@@ -36,7 +36,7 @@ final class LicenseKey
         self::$data = array_merge( self::$data, $args );
 
         if ( in_array( self::$data, [ 1, true, 'required' ] ) ) {
-        $this->setupActionsAndFilters();
+            $this->setupActionsAndFilters();
         }
     }
 

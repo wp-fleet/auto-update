@@ -177,21 +177,33 @@ final class Plugin
      */
     public function filterCustomPluginsTransient( $transient )
     {
-        if ( ! isset( $transient->response ) ) {
-            return $transient;
-        }
-
         // Get the remote version.
         $remote_plugin_data = $this->getRemotePluginData();
-//        print_r('<pre>');
-//        print_r($remote_plugin_data);
-//        die;
-        if (!is_wp_error($remote_plugin_data) && isset($remote_plugin_data->new_version) && $remote_plugin_data->new_version) {
 
+        if ( ! is_wp_error( $remote_plugin_data ) && !empty( $remote_plugin_data->new_version ) ) {
             // If a newer version is available, add the update.
             if ( version_compare( self::$plugin_data['Version'], $remote_plugin_data->new_version, '<' ) ) {
                 $transient->response[ self::$plugin_basename ] = $remote_plugin_data;
+            } else {
+                $transient->no_update[ self::$plugin_basename ] = $remote_plugin_data;
             }
+        } else {
+            $empty_plugin_data = (object) [
+                'id'            => self::$plugin_basename,
+                'slug'          => self::$plugin_basename,
+                'plugin'        => self::$plugin_basename,
+                'new_version'   => self::$plugin_data->Version,
+                'url'           => self::$plugin_data->PluginURI,
+                'package'       => '',
+                'icons'         => [],
+                'banners'       => [],
+                'banners_rtl'   => [],
+                'tested'        => '',
+                'requires_php'  => '',
+                'compatibility' => new \stdClass(),
+            ];
+
+            $transient->no_update[ self::$plugin_basename ] = $empty_plugin_data;
         }
 
         return $transient;
