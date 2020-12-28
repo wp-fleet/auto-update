@@ -68,10 +68,10 @@ final class Plugin
 
         // Make sure all needed data is defined.
         if ( empty( $args['api_url'] ) ) {
-            self::$error_messages[] = 'The "api_url" param is required in Pixolette\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "api_url" param is required in WpFleet\AutoUpdate\Loader class.';
         }
         if ( empty( $args['plugin_full_path'] ) ) {
-            self::$error_messages[] = 'The "plugin_full_path" param is required in Pixolette\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "plugin_full_path" param is required in WpFleet\AutoUpdate\Loader class.';
         }
 
         // Make sure we'll display error messages only in admin. Bail early if error.
@@ -192,8 +192,8 @@ final class Plugin
                 'id'            => self::$plugin_basename,
                 'slug'          => self::$plugin_basename,
                 'plugin'        => self::$plugin_basename,
-                'new_version'   => self::$plugin_data->Version,
-                'url'           => self::$plugin_data->PluginURI,
+                'new_version'   => self::$plugin_data->Version ?? '1.0.0',
+                'url'           => self::$plugin_data->PluginURI ?? '',
                 'package'       => '',
                 'icons'         => [],
                 'banners'       => [],
@@ -356,9 +356,9 @@ final class Plugin
      *
      * @return bool
      */
-    public function filterAllowPluginUpdateFromCustomHost( $allow, $host, $url ) : bool
+    public function filterAllowPluginUpdateFromCustomHost( bool $allow, string $host, string $url ) : bool
     {
-        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'] ) ) {
+        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'], true ) ) {
             return true;
         }
 
