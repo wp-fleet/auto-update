@@ -358,6 +358,10 @@ final class Plugin
      */
     public function filterAllowPluginUpdateFromCustomHost( bool $allow, string $host, string $url ) : bool
     {
+        print_r($host);
+        print_r(' - ');
+        print_r($url);
+        die;
         if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'], true ) ) {
             return true;
         }
