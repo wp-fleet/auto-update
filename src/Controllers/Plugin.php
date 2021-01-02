@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace WpFleet\AutoUpdate\Controllers;
 
+#use WpFleet\Models\LicenceKey;
+use WpFleet\AutoUpdate\Controllers\LicenseKey;
+
 final class Plugin
 {
     /**
@@ -23,7 +26,7 @@ final class Plugin
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
-        'licence_key' => false,
+        'license_key' => false,
     ];
 
     /**
@@ -68,10 +71,10 @@ final class Plugin
 
         // Make sure all needed data is defined.
         if ( empty( $args['api_url'] ) ) {
-            self::$error_messages[] = 'The "api_url" param is required in WpFleet\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "api_url" param is required in Pixolette\AutoUpdate\Loader class.';
         }
         if ( empty( $args['plugin_full_path'] ) ) {
-            self::$error_messages[] = 'The "plugin_full_path" param is required in WpFleet\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "plugin_full_path" param is required in Pixolette\AutoUpdate\Loader class.';
         }
 
         // Make sure we'll display error messages only in admin. Bail early if error.
@@ -80,7 +83,9 @@ final class Plugin
             return;
         }
 
-        self::$license_key = $license_key;
+        if ( in_array( $args['license_key'], [ 'required', true, 1 ] ) ) {
+            self::$license_key = LicenseKey::getLicenseKey( self::$data['plugin_full_path'] );
+        }
         if ( ! empty( $args['transient_validity'] ) && 0 < $args['transient_validity'] ) {
             self::$transient_validity = (int) $args['transient_validity'];
         }
@@ -240,7 +245,7 @@ final class Plugin
         ];
 
         $response = $this->request( $update_data );
-
+        
         if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && ! empty( $response->data ) ) {
             $transient = $response->data;
 
@@ -356,13 +361,9 @@ final class Plugin
      *
      * @return bool
      */
-    public function filterAllowPluginUpdateFromCustomHost( bool $allow, string $host, string $url ) : bool
+    public function filterAllowPluginUpdateFromCustomHost( $allow, $host, $url ) : bool
     {
-        print_r($host);
-        print_r(' - ');
-        print_r($url);
-        die;
-        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'], true ) ) {
+        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'] ) ) {
             return true;
         }
 

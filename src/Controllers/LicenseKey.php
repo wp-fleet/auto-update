@@ -23,7 +23,7 @@ final class LicenseKey
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
-        'licence_key' => false,
+        'license_key' => false,
     ];
 
     /**
@@ -58,7 +58,7 @@ final class LicenseKey
     {
         add_submenu_page(
             'plugins.php',
-            esc_html__('License Keys', 'wp-fleet'),
+            '',
             esc_html__('License Keys', 'wp-fleet'),
             'manage_options',
             'license-keys',
@@ -108,13 +108,27 @@ final class LicenseKey
     }
 
     /**
-     * Get license key
+     * Get license keys
      *
      * @return array|null
      */
     public static function getLicenseKeys() : ?array
     {
         return get_option( self::$meta_prefix, [] );
+    }
+
+    /**
+     * Get license key
+     *
+     * @param string $plugin
+     *
+     * @return string|null
+     */
+    public static function getLicenseKey( string $plugin ) : ?string
+    {
+        $keys = get_option( self::$meta_prefix, [] );
+
+        return $keys[ $plugin ] ?? '';
     }
 
 }
