@@ -20,6 +20,7 @@ final class Loader
      */
     public function __construct( array $args = [], string $product_type = 'plugin' )
     {
+        print_r(778);
         if ( ! defined( 'ABSPATH' ) || empty( $args ) ) {
             return;
         }

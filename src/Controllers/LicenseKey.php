@@ -45,7 +45,15 @@ final class LicenseKey
      */
     private function setupActionsAndFilters() : void
     {
+        add_filter( 'auto_update_plugin_license_keys', [ $this, 'filterLicenseKeysPage' ] );
         add_action( 'admin_menu', [ $this, 'adminPageInit' ] );
+    }
+
+    public function filterLicenseKeysPage( array $license_keys ) : array
+    {
+        $license_keys[ self::$data['plugin_full_path'] ] = self::$data['plugin_name'];
+
+        return $license_keys;
     }
 
     /**
@@ -56,15 +64,19 @@ final class LicenseKey
      */
     public function adminPageInit() : void
     {
-        add_submenu_page(
-            'plugins.php',
-            esc_html__('License Keys', 'wp-fleet'),
-            esc_html__('License Keys', 'wp-fleet'),
-            'manage_options',
-            'license-keys',
-            [ $this, 'licenseKeysPage' ],
-            9
-        );
+        if ( ! did_action( 'wp_fleet_auto_update_license_page_displayed' ) ) {
+            do_action( 'wp_fleet_auto_update_license_page_displayed' );
+
+            add_submenu_page(
+                'plugins.php',
+                esc_html__('License Keys', 'wp-fleet'),
+                esc_html__('License Keys', 'wp-fleet'),
+                'manage_options',
+                'license-keys',
+                [$this, 'licenseKeysPage'],
+                9
+            );
+        }
     }
 
     /**
@@ -84,12 +96,7 @@ final class LicenseKey
             self::updateLicenseKeys( $_POST['license-keys'] );
         }
 
-        $fields = apply_filters(
-            'auto_update_plugin_license_keys',
-            [
-                self::$data['plugin_full_path'] => self::$data['plugin_name']
-            ]
-        );
+        $fields = apply_filters( 'auto_update_plugin_license_keys', [] );
 
         $license_keys = self::getLicenseKeys();
 
