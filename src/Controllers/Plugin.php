@@ -245,7 +245,7 @@ final class Plugin
         ];
 
         $response = $this->request( $update_data );
-        
+
         if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && ! empty( $response->data ) ) {
             $transient = $response->data;
 

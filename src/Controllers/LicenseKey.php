@@ -58,7 +58,7 @@ final class LicenseKey
     {
         add_submenu_page(
             'plugins.php',
-            '',
+            esc_html__('License Keys', 'wp-fleet'),
             esc_html__('License Keys', 'wp-fleet'),
             'manage_options',
             'license-keys',
