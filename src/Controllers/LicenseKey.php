@@ -19,12 +19,17 @@ final class LicenseKey
     /**
      * @var array|string[]
      */
-    private static array $data = [
+    private static array $default_data = [
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
         'license_key' => false,
     ];
+
+    /**
+     * @var array|string[]
+     */
+    private static array $data = [];
 
     /**
      * Function to init package functionality
@@ -33,7 +38,7 @@ final class LicenseKey
      */
     public function init( array $args ) : void
     {
-        self::$data = array_merge( self::$data, $args );
+        self::$data[] = array_merge( self::$default_data, $args );
 
         if ( in_array( self::$data, [ 1, true, 'required' ] ) ) {
             $this->setupActionsAndFilters();
@@ -45,13 +50,15 @@ final class LicenseKey
      */
     private function setupActionsAndFilters() : void
     {
-        add_filter( 'auto_update_plugin_license_keys', [ $this, 'filterLicenseKeysPage' ] );
+        add_filter( 'auto_update_plugin_license_keys', [ $this, 'filterLicenseKeysPage' ], 1 );
         add_action( 'admin_menu', [ $this, 'adminPageInit' ] );
     }
 
     public function filterLicenseKeysPage( array $license_keys ) : array
     {
-        $license_keys[ self::$data['plugin_full_path'] ] = self::$data['plugin_name'];
+        foreach ( self::$data as $item) {
+            $license_keys[ $item['plugin_full_path'] ] = $item['plugin_name'];
+        }
 
         return $license_keys;
     }
