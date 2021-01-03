@@ -57,3 +57,6 @@ license_key - if true|1|required, a new page will be added under WP Admin -> Plu
 have to submit a valid license key to be able to automatically update plugin. If no license key is required, set it 
 to false.  
 ```
+
+## License
+WP Mail Helper code is licensed under MIT license.
