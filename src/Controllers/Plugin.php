@@ -27,7 +27,15 @@ final class Plugin
         'plugin_full_path' => '',
         'allowed_hosts' => '',
         'license_key' => false,
+        'plugin_path' => '',
+        'plugin_basename' => '',
+        'plugin_data' => [],
     ];
+
+    /**
+     * @var array|string[]
+     */
+    private static array $all_plugins_data = [];
 
     /**
      * @var array
@@ -37,22 +45,7 @@ final class Plugin
     /**
      * @var string
      */
-    private static string $plugin_path = '';
-
-    /**
-     * @var string
-     */
     private static string $plugin_basename = '';
-
-    /**
-     * @var array
-     */
-    private static array $plugin_data = [];
-
-    /**
-     * @var string
-     */
-    private static string $license_key = '';
 
     /**
      * @var int
@@ -68,13 +61,15 @@ final class Plugin
     public function init( array $args, string $license_key = '' ) : void
     {
         self::$data = array_merge( self::$data, $args );
+        self::$data['plugin_basename'] = plugin_basename( self::$data['plugin_full_path'] );
+        self::$all_plugins_data[ self::$data['plugin_basename'] ] = self::$data;
 
         // Make sure all needed data is defined.
         if ( empty( $args['api_url'] ) ) {
-            self::$error_messages[] = 'The "api_url" param is required in Pixolette\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "api_url" param is required in WpFleet\AutoUpdate\Loader class.';
         }
         if ( empty( $args['plugin_full_path'] ) ) {
-            self::$error_messages[] = 'The "plugin_full_path" param is required in Pixolette\AutoUpdate\Loader class.';
+            self::$error_messages[] = 'The "plugin_full_path" param is required in WpFleet\AutoUpdate\Loader class.';
         }
 
         // Make sure we'll display error messages only in admin. Bail early if error.
@@ -84,7 +79,7 @@ final class Plugin
         }
 
         if ( in_array( $args['license_key'], [ 'required', true, 1 ] ) ) {
-            self::$license_key = LicenseKey::getLicenseKey( self::$data['plugin_full_path'] );
+            self::$all_plugins_data[ self::$data['plugin_basename'] ]['license_key'] = LicenseKey::getLicenseKey( self::$data['plugin_full_path'] );
         }
         if ( ! empty( $args['transient_validity'] ) && 0 < $args['transient_validity'] ) {
             self::$transient_validity = (int) $args['transient_validity'];
@@ -94,12 +89,13 @@ final class Plugin
 
         $this->setupPluginData();
         $this->setupActionsAndFilters();
+
     }
 
     private function setupPluginData() : void
     {
-        self::$plugin_path = plugin_dir_path( self::$data['plugin_full_path'] );
-        self::$plugin_basename = plugin_basename( self::$data['plugin_full_path'] );
+        self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_path'] = plugin_dir_path( self::$data['plugin_full_path'] );
+        self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'] = self::$data['plugin_basename'];
 
         // Bail early if plugin is not active
         if ( ! $this->currentPluginIsActive() ) {
@@ -109,7 +105,8 @@ final class Plugin
         if ( ! function_exists( 'get_plugin_data' ) ) {
             include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
         }
-        self::$plugin_data = get_plugin_data( self::$data['plugin_full_path'] );
+
+        self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_data'] = get_plugin_data( self::$data['plugin_full_path'] );
     }
 
     /**
@@ -117,11 +114,19 @@ final class Plugin
      */
     private function setupActionsAndFilters() : void
     {
-        if ( ! empty( self::$plugin_data ) ) {
+        if ( ! empty( self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_data'] )
+            && ! did_action( 'wp_fleet_auto_update_plugin_actions' )
+        ) {
+            do_action( 'wp_fleet_auto_update_plugin_actions' );
 
             // Admin action to display message.
             if ( is_admin() ) {
-                add_action( 'in_plugin_update_message-' . self::$plugin_basename, [ $this, 'actionCustomPluginUpdateMessage' ], 10, 2 );
+                add_action(
+                    'in_plugin_update_message-' . self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'],
+                    [ $this, 'actionCustomPluginUpdateMessage' ],
+                    10,
+                    2
+                );
             }
 
             // Append update information to transient.
@@ -145,7 +150,7 @@ final class Plugin
             include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
         }
 
-        return is_plugin_active( self::$plugin_basename );
+        return is_plugin_active( self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'] );
     }
 
     /**
@@ -154,9 +159,9 @@ final class Plugin
      * @param string $transient
      * @return string
      */
-    private function getTransientName( string $transient = 'plugin_info' ) : string
+    private function getTransientName( string $transient = 'plugin_info', $plugin_basename ) : string
     {
-        return self::$transient_prefix . $transient . '_' . self::$plugin_basename;
+        return self::$transient_prefix . $transient . '_' . ( $plugin_basename ?? self::$plugin_basename );
     }
 
     /**
@@ -182,33 +187,35 @@ final class Plugin
      */
     public function filterCustomPluginsTransient( $transient )
     {
-        // Get the remote version.
-        $remote_plugin_data = $this->getRemotePluginData();
+        foreach ( self::$all_plugins_data as $plugin_full_path => $data ) {
+            // Get the remote version.
+            $remote_plugin_data = $this->getRemotePluginData( $plugin_full_path );
 
-        if ( ! is_wp_error( $remote_plugin_data ) && !empty( $remote_plugin_data->new_version ) ) {
-            // If a newer version is available, add the update.
-            if ( version_compare( self::$plugin_data['Version'], $remote_plugin_data->new_version, '<' ) ) {
-                $transient->response[ self::$plugin_basename ] = $remote_plugin_data;
+            if ( ! is_wp_error( $remote_plugin_data ) && ! empty( $remote_plugin_data->new_version ) ) {
+                // If a newer version is available, add the update.
+                if (version_compare($data['plugin_data']['Version'], $remote_plugin_data->new_version, '<')) {
+                    $transient->response[ $data['plugin_basename'] ] = $remote_plugin_data;
+                } else {
+                    $transient->no_update[ $data['plugin_basename'] ] = $remote_plugin_data;
+                }
             } else {
-                $transient->no_update[ self::$plugin_basename ] = $remote_plugin_data;
-            }
-        } else {
-            $empty_plugin_data = (object) [
-                'id'            => self::$plugin_basename,
-                'slug'          => self::$plugin_basename,
-                'plugin'        => self::$plugin_basename,
-                'new_version'   => self::$plugin_data->Version ?? '1.0.0',
-                'url'           => self::$plugin_data->PluginURI ?? '',
-                'package'       => '',
-                'icons'         => [],
-                'banners'       => [],
-                'banners_rtl'   => [],
-                'tested'        => '',
-                'requires_php'  => '',
-                'compatibility' => new \stdClass(),
-            ];
+                $empty_plugin_data = (object)[
+                    'id' => $data['plugin_basename'],
+                    'slug' => $data['plugin_basename'],
+                    'plugin' => $data['plugin_basename'],
+                    'new_version' => $data['plugin_data']->Version ?? '1.0.0',
+                    'url' => $data['plugin_data']->PluginURI ?? '',
+                    'package' => '',
+                    'icons' => [],
+                    'banners' => [],
+                    'banners_rtl' => [],
+                    'tested' => '',
+                    'requires_php' => '',
+                    'compatibility' => new \stdClass(),
+                ];
 
-            $transient->no_update[ self::$plugin_basename ] = $empty_plugin_data;
+                $transient->no_update[ $data['plugin_basename'] ] = $empty_plugin_data;
+            }
         }
 
         return $transient;
@@ -219,9 +226,10 @@ final class Plugin
      *
      * @return mixed $transient
      */
-    public function getRemotePluginData()
+    public function getRemotePluginData( $plugin_full_path = '' )
     {
-        $transient_name = $this->getTransientName();
+        $data = self::$all_plugins_data[ $plugin_full_path ];
+        $transient_name = $this->getTransientName( 'plugin_info', $data['plugin_basename'] );
 
         // Delete transient when force-check is used to refresh.
         if ( isset( $_GET['force-check'] ) && 1 == $_GET['force-check'] ) {
@@ -238,9 +246,9 @@ final class Plugin
         // data that request update
         $update_data = [
             'action' => 'wp-fleet-plugin-info',
-            'license-code' => self::$license_key,
-            'product-slug' => self::$plugin_basename,
-            'product-name' => self::$plugin_data['Name'],
+            'license-code' => $data['license_key'],
+            'product-slug' => $data['plugin_basename'],
+            'product-name' => $data['plugin_data']['Name'],
             'website' => home_url(),
         ];
 
@@ -274,7 +282,9 @@ final class Plugin
             return $result;
         }
 
-        if ( $args->slug == self::$plugin_basename ) {
+        $plugin_data = self::$all_plugins_data[ $args->slug ];
+
+        if ( $args->slug == $plugin_data['plugin_basename'] ) {
             $plugin = true;
         }
 
@@ -282,7 +292,7 @@ final class Plugin
             return $result;
         }
 
-        $transient_name = self::getTransientName( 'plugin_details' );
+        $transient_name = self::getTransientName( 'plugin_details', $plugin_data['plugin_basename'] );
 
         // Delete transient if force-check is used to refresh.
         if ( isset( $_GET['force-check'] ) && 1 == $_GET['force-check'] ) {
@@ -298,9 +308,9 @@ final class Plugin
         // data that request update
         $update_data = [
             'action' => 'wp-fleet-plugin-details',
-            'license-code' => self::$license_key,
-            'product-slug' => self::$plugin_basename,
-            'product-name' => self::$plugin_data['Name'],
+            'license-code' => $plugin_data['license_key'],
+            'product-slug' => $plugin_data['plugin_basename'],
+            'product-name' => $plugin_data['plugin_data']['Name'],
             'website' => home_url(),
         ];
 
@@ -363,7 +373,11 @@ final class Plugin
      */
     public function filterAllowPluginUpdateFromCustomHost( $allow, $host, $url ) : bool
     {
-        if ( ! empty( self::$data['allowed_hosts'] ) && in_array( $host, self::$data['allowed_hosts'] ) ) {
+        $allowed_hosts = array_map( function ( $value ) {
+            return $value['allowed_hosts'];
+        }, self::$all_plugins_data );
+
+        if ( ! empty( $allowed_hosts ) && in_array( $host, $allowed_hosts ) ) {
             return true;
         }
 
