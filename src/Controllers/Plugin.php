@@ -254,6 +254,8 @@ final class Plugin
 
         $response = $this->request( $update_data );
 
+        self::$all_plugins_data[ $data['plugin_basename'] ]['is_valid_license_key'] = (array) $response->data->is_valid_license_key;
+
         if ( ! is_wp_error( $response ) && ! empty( $response->success ) && 1 == $response->success && ! empty( $response->data ) ) {
             $transient = $response->data;
 
@@ -392,20 +394,18 @@ final class Plugin
      */
     public function actionCustomPluginUpdateMessage( $plugin_data, $response ) : void
     {
-        // TODO: implement functionality
-
-//        $license_key_status = $this->getLicenseKeyStatus();
-//
-//        if (isset($license_key_status['license-code']) && isset($license_key_status['license-status']) && $license_key_status['license-status'] == 'valid' && $license_key_status['license-code'] == 'valid') {
-//            return;
-//        }
-//        if ('invalid' == $license_key_status['license-code']) {
-//            echo '<br />' . sprintf( __('The Purchase Code you\'ve submitted is not valid. If you don\'t have a Purchase Code, please see <a href="%s">details & pricing</a>.', 'pixolette-product'), 'https://wp.pixolette.com/wordpress-plugins/' );
-//        } elseif ('expired' == $license_key_status['license-status']) {
-//            echo '<br />' . sprintf( __('The Purchase Code you\'ve submitted is expired. You can update the plugin, but can\'t get support. If you want to renew the support, please see <a href="%s">details & pricing</a>.', 'pixolette-product'), 'https://wp.pixolette.com/wordpress-plugins/' );
-//        } else {
-//            echo '<br />' . sprintf( __('To enable updates, please enter Envato Purchase Code on the plugin page. If you don\'t have a Purchase Code, please see <a href="%s">details & pricing</a>.', 'pixolette-product'), 'https://wp.pixolette.com/wordpress-plugins/' );
-//        }
+        if ( ! empty( $plugin_data['is_valid_license_key']->status )
+            && 'valid' !== $plugin_data['is_valid_license_key']->status
+        ) {
+            switch ( $plugin_data['is_valid_license_key']->status ) {
+                case 'not valid':
+                    echo '&nbsp<br/><em>Invalid license key. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    break;
+                case 'expired':
+                    echo '&nbsp<em>License key is expired. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    break;
+            }
+        }
     }
 
 }
