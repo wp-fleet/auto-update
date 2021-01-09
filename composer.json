@@ -1,7 +1,7 @@
 {
     "name": "wp-fleet/auto-update",
     "description": "PHP Package to handle the plugin and themes auto update functionality",
-    "version": "0.0.2",
+    "version": "1.0.0",
     "license": "MIT",
     "authors": [
         {

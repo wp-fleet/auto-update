@@ -119,16 +119,6 @@ final class Plugin
         ) {
             do_action( 'wp_fleet_auto_update_plugin_actions' );
 
-            // Admin action to display message.
-            if ( is_admin() ) {
-                add_action(
-                    'in_plugin_update_message-' . self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'],
-                    [ $this, 'actionCustomPluginUpdateMessage' ],
-                    10,
-                    2
-                );
-            }
-
             // Append update information to transient.
             add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'filterCustomPluginsTransient' ], 10, 1 );
 
@@ -136,6 +126,16 @@ final class Plugin
             add_filter( 'plugins_api', [ $this, 'filterGetRemotePluginDetails' ], 10, 3 );
 
             add_filter( 'http_request_host_is_external', [ $this, 'filterAllowPluginUpdateFromCustomHost' ], 10, 3 );
+        }
+
+        // Admin action to display message.
+        if ( is_admin() ) {
+            add_action(
+                'in_plugin_update_message-' . self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'],
+                [ $this, 'actionCustomPluginUpdateMessage' ],
+                10,
+                2
+            );
         }
     }
 
@@ -217,7 +217,7 @@ final class Plugin
                 $transient->no_update[ $data['plugin_basename'] ] = $empty_plugin_data;
             }
         }
-
+        
         return $transient;
     }
 
@@ -399,10 +399,12 @@ final class Plugin
         ) {
             switch ( $plugin_data['is_valid_license_key']->status ) {
                 case 'not valid':
-                    echo '&nbsp<br/><em>Invalid license key. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    $text = '<br/><em>Invalid license key. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    echo wp_kses_post( apply_filters( 'wp_fleet_auto_update_licence_not_valid', $text ) );
                     break;
                 case 'expired':
-                    echo '&nbsp<em>License key is expired. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    $text = '<em>License key is expired. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    echo wp_kses_post( apply_filters( 'wp_fleet_auto_update_licence_expired', $text ) );
                     break;
             }
         }
