@@ -16,9 +16,11 @@
         <form method="post" action="">
             <table class="form-table">
                 <?php foreach ( $fields as $key => $field ) : ?>
+                    <?php $plugin_data = get_plugin_data( $key ); ?>
                     <tr>
                         <th scope="row">
-                            <label for="wp-fleet-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field ); ?></label>
+                            <label for="wp-fleet-<?php echo esc_attr( $key ); ?>"><?php echo esc_html(
+                                    $plugin_data['Name'] ?? $field ); ?></label>
                         </th>
                         <td>
                             <input name="license-keys[<?php echo esc_attr( $key ); ?>]" type="text"

@@ -17,12 +17,12 @@ final class Plugin
     /**
      * @var string
      */
-    private static string $transient_prefix = 'wp_fleet_auto_update_';
+    private static $transient_prefix = 'wp_fleet_auto_update_';
 
     /**
      * @var array|string[]
      */
-    private static array $data = [
+    private static $data = [
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
@@ -35,22 +35,22 @@ final class Plugin
     /**
      * @var array|string[]
      */
-    private static array $all_plugins_data = [];
+    private static $all_plugins_data = [];
 
     /**
      * @var array
      */
-    private static array $error_messages = [];
+    private static $error_messages = [];
 
     /**
      * @var string
      */
-    private static string $plugin_basename = '';
+    private static $plugin_basename = '';
 
     /**
      * @var int
      */
-    private static int $transient_validity = 12;
+    private static $transient_validity = 12;
 
     /**
      * Function to init package functionality
@@ -58,9 +58,23 @@ final class Plugin
      * @param array $args
      * @param string $license_key
      */
-    public function init( array $args, string $license_key = '' ) : void
+    public function init( array $args, string $license_key = '' )
     {
         self::$data = array_merge( self::$data, $args );
+        self::$data['api_url'] = trailingslashit( self::$data['api_url'] ) . 'wp-json/wp-fleet/v1/plugin/';
+        if ( empty( self::$data['allowed_hosts'] ) ) {
+            self::$data['allowed_hosts'] = [
+                $args['api_url']
+            ];
+        } else {
+            if ( ! is_array( self::$data['allowed_hosts'] ) ) {
+                self::$data['allowed_hosts'] = [ self::$data['allowed_hosts'] ];
+            }
+            if ( ! in_array( $args['api_url'], self::$data['allowed_hosts'] ) ) {
+                self::$data['allowed_hosts'][] = $args['api_url'];
+            }
+        }
+
         self::$data['plugin_basename'] = plugin_basename( self::$data['plugin_full_path'] );
         self::$all_plugins_data[ self::$data['plugin_basename'] ] = self::$data;
 
@@ -92,7 +106,7 @@ final class Plugin
 
     }
 
-    private function setupPluginData() : void
+    private function setupPluginData()
     {
         self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_path'] = plugin_dir_path( self::$data['plugin_full_path'] );
         self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_basename'] = self::$data['plugin_basename'];
@@ -112,7 +126,7 @@ final class Plugin
     /**
      * Function to register actions and filters
      */
-    private function setupActionsAndFilters() : void
+    private function setupActionsAndFilters()
     {
         if ( ! empty( self::$all_plugins_data[ self::$data['plugin_basename'] ]['plugin_data'] )
             && ! did_action( 'wp_fleet_auto_update_plugin_actions' )
@@ -167,7 +181,7 @@ final class Plugin
     /**
      * Function to display admin messages.
      */
-    public function actionAdminNotice() : void
+    public function actionAdminNotice()
     {
         $class = 'notice notice-error';
         $message = '';
@@ -392,22 +406,28 @@ final class Plugin
      * @param mixed $plugin_data
      * @param mixed $response
      */
-    public function actionCustomPluginUpdateMessage( $plugin_data, $response ) : void
+    public function actionCustomPluginUpdateMessage( $plugin_data, $response )
     {
         if ( ! empty( $plugin_data['is_valid_license_key']->status )
             && 'valid' !== $plugin_data['is_valid_license_key']->status
         ) {
             switch ( $plugin_data['is_valid_license_key']->status ) {
                 case 'not valid':
-                    $text = '<br/><em>Invalid license key. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    $text = '<em> <strong>Reason: </strong> Invalid license key. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
                     echo wp_kses_post( apply_filters( 'wp_fleet_auto_update_licence_not_valid', $text ) );
                     break;
                 case 'expired':
-                    $text = '<em>License key is expired. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
+                    $text = '<em> <strong>Reason: </strong> License key is expired. <a href="' . esc_url( admin_url( 'plugins.php?page=license-keys' ) ) . '">Please submit a valid key to enable plugin updates</a>.</em>';
                     echo wp_kses_post( apply_filters( 'wp_fleet_auto_update_licence_expired', $text ) );
+                    break;
+                default:
+                    $text = '<em> <strong>Reason: </strong>' . $plugin_data['is_valid_license_key']->status . '</em>';
+                    echo wp_kses_post( apply_filters( 'wp_fleet_auto_update_licence_error_message', $text ) );
                     break;
             }
         }
+        $promo = apply_filters( 'wp_fleet_auto_update_licence_custom_message', '' );
+        echo wp_kses_post( $promo );
     }
 
 }
