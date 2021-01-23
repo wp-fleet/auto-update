@@ -14,12 +14,12 @@ final class LicenseKey
     /**
      * @var string
      */
-    private static string $meta_prefix = 'wp-fleet-plugin-license-keys';
+    private static $meta_prefix = 'wp-fleet-plugin-license-keys';
 
     /**
      * @var array|string[]
      */
-    private static array $default_data = [
+    private static $default_data = [
         'api_url' => '',
         'plugin_full_path' => '',
         'allowed_hosts' => '',
@@ -29,14 +29,14 @@ final class LicenseKey
     /**
      * @var array|string[]
      */
-    private static array $data = [];
+    private static $data = [];
 
     /**
      * Function to init package functionality
      *
      * @param array $args
      */
-    public function init( array $args ) : void
+    public function init( array $args )
     {
         self::$data[] = array_merge( self::$default_data, $args );
 
@@ -48,7 +48,7 @@ final class LicenseKey
     /**
      * Function to register actions and filters
      */
-    private function setupActionsAndFilters() : void
+    private function setupActionsAndFilters()
     {
         add_filter( 'auto_update_plugin_license_keys', [ $this, 'filterLicenseKeysPage' ], 1 );
         add_action( 'admin_menu', [ $this, 'adminPageInit' ] );
@@ -69,7 +69,7 @@ final class LicenseKey
      * @method adminPageInit
      * @since 1.0.0
      */
-    public function adminPageInit() : void
+    public function adminPageInit()
     {
         if ( ! did_action( 'wp_fleet_auto_update_license_page_displayed' ) ) {
             do_action( 'wp_fleet_auto_update_license_page_displayed' );
@@ -89,7 +89,7 @@ final class LicenseKey
     /**
      * License keys manage page
      */
-    public function licenseKeysPage() : void
+    public function licenseKeysPage()
     {
         if ( ! empty( $_POST['action'] )
             && 'wp-fleet-plugin-save-keys' === $_POST['action']
@@ -116,7 +116,7 @@ final class LicenseKey
      *
      * @param array $data
      */
-    public static function updateLicenseKeys( array $data ) : void
+    public static function updateLicenseKeys( array $data )
     {
         update_option( self::$meta_prefix, $data );
     }
@@ -126,7 +126,7 @@ final class LicenseKey
      *
      * @return array|null
      */
-    public static function getLicenseKeys() : ?array
+    public static function getLicenseKeys()
     {
         return get_option( self::$meta_prefix, [] );
     }
@@ -138,7 +138,7 @@ final class LicenseKey
      *
      * @return string|null
      */
-    public static function getLicenseKey( string $plugin ) : ?string
+    public static function getLicenseKey( string $plugin )
     {
         $keys = get_option( self::$meta_prefix, [] );
 
