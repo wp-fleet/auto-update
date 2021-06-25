@@ -243,6 +243,9 @@ final class Plugin
     public function getRemotePluginData( $plugin_full_path = '' )
     {
         $data = self::$all_plugins_data[ $plugin_full_path ];
+        if ( empty( $data ) ) {
+            return '';
+        }
         $transient_name = $this->getTransientName( 'plugin_info', $data['plugin_basename'] );
 
         // Delete transient when force-check is used to refresh.

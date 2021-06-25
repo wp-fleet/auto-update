@@ -57,7 +57,7 @@ final class LicenseKey
     public function filterLicenseKeysPage( array $license_keys ) : array
     {
         foreach ( self::$data as $item) {
-            $license_keys[ $item['plugin_full_path'] ] = $item['plugin_name'];
+            $license_keys[ $item['plugin_full_path'] ] = isset( $item['plugin_name'] ) ? $item['plugin_name'] : '';
         }
 
         return $license_keys;
