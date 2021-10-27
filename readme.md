@@ -55,6 +55,12 @@ plugin_name - [optional] the name of the current plugin (that will be updated au
 ```
 license_key - [optional] if true|1|required, a new page will be added under WP Admin -> Plugins -> License Keys and user will have to submit a valid license key to be able to automatically update plugin. If no license key is required, set it to false.  
 ```
+```
+license_page_parent_slug - [optional] set the admin parent page slug.
+```
+```
+license_page_description - [optional] a description that will be displayed on the license page.
+```
 
 ## License
-WP Mail Helper code is licensed under MIT license.
+`wp-fleet/auto-update` code is licensed under MIT license.

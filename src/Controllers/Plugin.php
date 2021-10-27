@@ -99,7 +99,7 @@ final class Plugin
             self::$transient_validity = (int) $args['transient_validity'];
         }
 
-        ( new LicenseKey() )->init( self::$data );
+        ( new LicenseKey( self::$data ) )->init();
 
         $this->setupPluginData();
         $this->setupActionsAndFilters();
@@ -301,7 +301,11 @@ final class Plugin
             return $result;
         }
 
-        $plugin_data = self::$all_plugins_data[ $args->slug ];
+        $plugin_data = self::$all_plugins_data[ $args->slug ] ?? [];
+
+        if ( empty( $plugin_data ) ) {
+            return $result;
+        }
 
         if ( $args->slug == $plugin_data['plugin_basename'] ) {
             $plugin = true;

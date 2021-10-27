@@ -17,6 +17,16 @@ final class LicenseKey
     private static $meta_prefix = 'wp-fleet-plugin-license-keys';
 
     /**
+     * @var string
+     */
+    private static $default_parent_slug = 'plugins.php';
+
+    /**
+     * @var string
+     */
+    private static $default_page_slug = 'license-keys';
+
+    /**
      * @var array|string[]
      */
     private static $default_data = [
@@ -32,14 +42,20 @@ final class LicenseKey
     private static $data = [];
 
     /**
-     * Function to init package functionality
+     * Constructor
      *
      * @param array $args
      */
-    public function init( array $args )
+    public function __construct( array $args )
     {
         self::$data[] = array_merge( self::$default_data, $args );
+    }
 
+    /**
+     * Function to init package functionality
+     */
+    public function init()
+    {
         if ( in_array( self::$data, [ 1, true, 'required' ] ) ) {
             $this->setupActionsAndFilters();
         }
@@ -57,7 +73,7 @@ final class LicenseKey
     public function filterLicenseKeysPage( array $license_keys ) : array
     {
         foreach ( self::$data as $item) {
-            $license_keys[ $item['plugin_full_path'] ] = isset( $item['plugin_name'] ) ? $item['plugin_name'] : '';
+            $license_keys[ $item['plugin_full_path'] ] = $item;
         }
 
         return $license_keys;
@@ -74,15 +90,20 @@ final class LicenseKey
         if ( ! did_action( 'wp_fleet_auto_update_license_page_displayed' ) ) {
             do_action( 'wp_fleet_auto_update_license_page_displayed' );
 
-            add_submenu_page(
-                'plugins.php',
-                esc_html__('License Keys', 'wp-fleet'),
-                esc_html__('License Keys', 'wp-fleet'),
-                'manage_options',
-                'license-keys',
-                [$this, 'licenseKeysPage'],
-                9
-            );
+            foreach ( self::$data as $item) {
+                $parent_slug = $item['license_page_parent_slug'] ?? self::$default_parent_slug;
+                $page_slug = sanitize_title( $parent_slug ) . self::$default_page_slug;
+
+                add_submenu_page(
+                    $parent_slug,
+                    esc_html__('License', 'wp-fleet'),
+                    esc_html__('License', 'wp-fleet'),
+                    'manage_options',
+                    $page_slug,
+                    [$this, 'licenseKeysPage'],
+                    9
+                );
+            }
         }
     }
 
@@ -104,6 +125,7 @@ final class LicenseKey
         }
 
         $fields = apply_filters( 'auto_update_plugin_license_keys', [] );
+        $data = self::$data;
 
         $license_keys = self::getLicenseKeys();
 
