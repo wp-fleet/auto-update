@@ -99,7 +99,7 @@ final class Plugin
             self::$transient_validity = (int) $args['transient_validity'];
         }
 
-        ( new LicenseKey() )->init( self::$data );
+        ( new LicenseKey( self::$data ) )->init();
 
         $this->setupPluginData();
         $this->setupActionsAndFilters();

@@ -5,18 +5,24 @@
 
 ?>
 <div class="wrap">
-    <h1><?php esc_html_e( 'Manage License Keys', 'wp-fleet' ); ?></h1>
+    <h1><?php esc_html_e( 'License Key', 'wp-fleet' ); ?></h1>
     <?php
     if ( ! empty( $fields ) ) :
         if ( !is_array( $fields ) ) :
             $fields = (array) $fields;
         endif;
         ?>
-        <p><?php esc_html_e( 'Add the license key for each plugin in form below.', 'wp-fleet' ); ?></p>
         <form method="post" action="">
             <table class="form-table">
                 <?php foreach ( $fields as $key => $field ) : ?>
                     <?php $plugin_data = get_plugin_data( $key ); ?>
+                    <?php if ( ! empty( $field['license_page_description'] ) ) : ?>
+                        <tr>
+                            <th colspan="2">
+                                <?php echo esc_html( $field['license_page_description'] ) ?>
+                            </th>
+                        </tr>
+                    <?php endif; ?>
                     <tr>
                         <th scope="row">
                             <label for="wp-fleet-<?php echo esc_attr( $key ); ?>"><?php echo esc_html(
