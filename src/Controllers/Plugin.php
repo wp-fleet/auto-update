@@ -301,7 +301,11 @@ final class Plugin
             return $result;
         }
 
-        $plugin_data = self::$all_plugins_data[ $args->slug ];
+        $plugin_data = self::$all_plugins_data[ $args->slug ] ?? [];
+
+        if ( empty( $plugin_data ) ) {
+            return $result;
+        }
 
         if ( $args->slug == $plugin_data['plugin_basename'] ) {
             $plugin = true;
