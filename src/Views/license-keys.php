@@ -3,6 +3,7 @@
  * Backend view to manage license keys
  */
 
+$queried_object = get_queried_object();
 ?>
 <div class="wrap">
     <h1><?php esc_html_e( 'License Key', 'wp-fleet' ); ?></h1>
@@ -15,7 +16,21 @@
         <form method="post" action="">
             <table class="form-table">
                 <?php foreach ( $fields as $key => $field ) : ?>
-                    <?php $plugin_data = get_plugin_data( $key ); ?>
+                    <?php
+                    if( ! empty( $field['license_page_parent_slug'] ) && ! empty( $_REQUEST['page'] ) ) {
+                        $slugs = $this->getPageSlugs( $field );
+                        if( ! empty( $slugs['page_slug'] ) && $_REQUEST['page'] !== $slugs['page_slug'] ) {
+                            continue;
+                        }
+                    }
+                    if( empty( $field['license_page_parent_slug'] ) && ! empty( $_REQUEST['page'] ) ) {
+                        $slugs = $this->getDefaultPageSlugs();
+                        if( ! empty( $slugs['page_slug'] ) && $_REQUEST['page'] !== $slugs['page_slug'] ) {
+                            continue;
+                        }
+                    }
+                    $plugin_data = get_plugin_data( $key );
+                    ?>
                     <?php if ( ! empty( $field['license_page_description'] ) ) : ?>
                         <tr>
                             <th colspan="2">

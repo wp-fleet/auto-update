@@ -67,7 +67,7 @@ final class LicenseKey
     private function setupActionsAndFilters()
     {
         add_filter( 'auto_update_plugin_license_keys', [ $this, 'filterLicenseKeysPage' ], 1 );
-        add_action( 'admin_menu', [ $this, 'adminPageInit' ] );
+        add_action( 'admin_menu', [ $this, 'adminPageInit' ], 999 );
     }
 
     public function filterLicenseKeysPage( array $license_keys ) : array
@@ -91,20 +91,47 @@ final class LicenseKey
             do_action( 'wp_fleet_auto_update_license_page_displayed' );
 
             foreach ( self::$data as $item) {
-                $parent_slug = $item['license_page_parent_slug'] ?? self::$default_parent_slug;
-                $page_slug = sanitize_title( $parent_slug ) . self::$default_page_slug;
+                $slugs = $this->getPageSlugs( $item );
 
                 add_submenu_page(
-                    $parent_slug,
+                    $slugs['parent_slug'],
                     esc_html__('License', 'wp-fleet'),
                     esc_html__('License', 'wp-fleet'),
                     'manage_options',
-                    $page_slug,
+                    $slugs['page_slug'],
                     [$this, 'licenseKeysPage'],
                     9
                 );
             }
         }
+    }
+
+    /**
+     * Function to generate page & parent page slugs
+     *
+     * @param array $item
+     * @return array
+     */
+    public function getDefaultPageSlugs()
+    {
+        $slugs['parent_slug'] = self::$default_parent_slug;
+        $slugs['page_slug'] = sanitize_title( $slugs['parent_slug'] ) . self::$default_page_slug;
+
+        return $slugs;
+    }
+
+    /**
+     * Function to generate page & parent page slugs
+     *
+     * @param array $item
+     * @return array
+     */
+    public function getPageSlugs( $item )
+    {
+        $slugs['parent_slug'] = $item['license_page_parent_slug'] ?? self::$default_parent_slug;
+        $slugs['page_slug'] = sanitize_title( $slugs['parent_slug'] ) . self::$default_page_slug;
+
+        return $slugs;
     }
 
     /**
@@ -140,7 +167,9 @@ final class LicenseKey
      */
     public static function updateLicenseKeys( array $data )
     {
-        update_option( self::$meta_prefix, $data );
+        $keys = self::getLicenseKeys();
+        $newKeys = wp_parse_args( $data, $keys );
+        update_option( self::$meta_prefix, $newKeys );
     }
 
     /**
